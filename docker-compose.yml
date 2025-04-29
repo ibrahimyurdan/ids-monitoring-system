@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  # Security Gateway / Reverse Proxy
+  gateway:
+    build: 
+      context: .
+      dockerfile: Dockerfile.gateway
+    container_name: security_gateway
+    ports:
+      - "8080:8080"
+    cap_add:
+      - NET_ADMIN
+    networks:
+      dmz_net:
+        ipv4_address: 172.20.0.2
+      internal_net:
+        ipv4_address: 172.21.0.2
+
+  # Security Monitoring System
+  monitoring:
+    build:
+      context: .
+      dockerfile: Dockerfile.monitoring
+    container_name: security_monitoring
+    volumes:
+      - ./logs:/var/log/security
+    networks:
+      internal_net:
+        ipv4_address: 172.21.0.3
+
+  # Simulated Application Server
+  app_server:
+    build:
+      context: .
+      dockerfile: Dockerfile.app
+    container_name: app_server
+    networks:
+      internal_net:
+        ipv4_address: 172.21.0.4
+
+  # IDS (Intrusion Detection System)
+  ids:
+    build:
+      context: .
+      dockerfile: Dockerfile.ids
+    container_name: ids_system
+    cap_add:
+      - NET_ADMIN
+      - SYS_ADMIN
+    networks:
+      dmz_net:
+        ipv4_address: 172.20.0.3
+      internal_net:
+        ipv4_address: 172.21.0.5
+
+networks:
+  dmz_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+  internal_net:
+    driver: bridge
+    internal: true
+    ipam:
+      config:
+        - subnet: 172.21.0.0/16 

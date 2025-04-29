@@ -1,0 +1,35 @@
+FROM debian:bullseye-slim
+
+# Install Suricata and dependencies
+RUN apt-get update && apt-get install -y \
+    suricata \
+    python3 \
+    python3-pip \
+    tcpdump \
+    iptables \
+    net-tools \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python packages for IDS
+RUN pip3 install --no-cache-dir \
+    requests \
+    pyyaml \
+    python-iptables \
+    prometheus_client
+
+# Create directories for IDS
+RUN mkdir -p /var/log/suricata /etc/suricata/rules
+
+# Copy configuration files and rules
+COPY ./config/suricata.yaml /etc/suricata/
+COPY ./config/custom.rules /etc/suricata/rules/
+COPY ./scripts/ids_monitor.py /usr/local/bin/
+
+# Make script executable
+RUN chmod +x /usr/local/bin/ids_monitor.py
+
+# Expose ports
+EXPOSE 9090
+
+# Start IDS
+CMD ["python3", "/usr/local/bin/ids_monitor.py"] 

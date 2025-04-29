@@ -1,0 +1,31 @@
+# SQL Injection attempts
+alert tcp any any -> $HOME_NET any (msg:"SQL Injection Attempt"; flow:to_server,established; content:"UNION"; nocase; content:"SELECT"; nocase; distance:0; sid:1000001; rev:1;)
+alert tcp any any -> $HOME_NET any (msg:"SQL Injection Attempt - Multiple Queries"; flow:to_server,established; content:";"; content:"--"; distance:0; sid:1000002; rev:1;)
+
+# Cross-site Scripting (XSS) attempts
+alert tcp any any -> $HOME_NET any (msg:"XSS Attempt"; flow:to_server,established; content:"<script>"; nocase; sid:1000003; rev:1;)
+alert tcp any any -> $HOME_NET any (msg:"XSS Attempt - JavaScript Event"; flow:to_server,established; content:"onmouseover="; nocase; sid:1000004; rev:1;)
+
+# Directory traversal attempts
+alert tcp any any -> $HOME_NET any (msg:"Directory Traversal Attempt"; flow:to_server,established; content:"../"; content:"../../"; distance:0; sid:1000005; rev:1;)
+
+# Command injection attempts
+alert tcp any any -> $HOME_NET any (msg:"Command Injection Attempt"; flow:to_server,established; content:"|3b|"; content:"|7c|"; distance:0; sid:1000006; rev:1;)
+
+# Suspicious user agent strings
+alert http any any -> $HOME_NET any (msg:"Suspicious User Agent - Known Malware"; flow:to_server,established; content:"User-Agent|3a| Python-urllib"; http_header; sid:1000007; rev:1;)
+
+# Large POST requests (potential file upload)
+alert http any any -> $HOME_NET any (msg:"Large POST Request - Possible File Upload"; flow:to_server,established; http.method; content:"POST"; http.content_len:>1000000; sid:1000008; rev:1;)
+
+# Brute force detection
+alert tcp any any -> $HOME_NET any (msg:"Potential Brute Force Attack"; flow:to_server,established; threshold:type both,track by_src,count 20,seconds 60; sid:1000009; rev:1;)
+
+# Data exfiltration attempts
+alert tcp $HOME_NET any -> any any (msg:"Potential Data Exfiltration"; flow:to_server,established; dsize:>50000; threshold:type both,track by_src,count 5,seconds 60; sid:1000010; rev:1;)
+
+# Cryptocurrency mining detection
+alert tcp any any -> $HOME_NET any (msg:"Cryptocurrency Mining Pool Connection Attempt"; flow:to_server,established; content:"stratum+tcp"; sid:1000011; rev:1;)
+
+# Malware communication patterns
+alert tcp any any -> $HOME_NET any (msg:"Potential C2 Channel"; flow:to_server,established; dsize:<100; threshold:type both,track by_src,count 50,seconds 60; sid:1000012; rev:1;) 

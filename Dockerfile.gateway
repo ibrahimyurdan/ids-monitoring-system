@@ -1,0 +1,36 @@
+FROM nginx:alpine
+
+# Install required packages
+RUN apk add --no-cache \
+    iptables \
+    tcpdump \
+    fail2ban \
+    python3 \
+    py3-pip \
+    curl \
+    python3-dev \
+    gcc \
+    musl-dev
+
+# Create and activate virtual environment
+RUN python3 -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Install security packages in virtual environment
+RUN pip3 install --no-cache-dir \
+    requests \
+    prometheus_client
+
+# Copy configuration files
+COPY ./config/nginx.conf /etc/nginx/nginx.conf
+COPY ./config/fail2ban.conf /etc/fail2ban/jail.local
+COPY ./scripts/security_check.py /usr/local/bin/
+
+# Make script executable
+RUN chmod +x /usr/local/bin/security_check.py
+
+# Expose ports
+EXPOSE 8080
+
+# Start services
+CMD ["nginx", "-g", "daemon off;"] 
